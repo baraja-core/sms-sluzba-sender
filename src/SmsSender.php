@@ -1,0 +1,94 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Baraja\Sms;
+
+
+/**
+ * Send SMS via https://sms-sluzba.cz
+ */
+final class SmsSender
+{
+	public const API_URL = 'https://smsgateapi.sluzba.cz/apipost30/sms';
+
+	public const AUTH_MSG_LENGTH = 31;
+
+	public const RESPONSE_PATTERN = '/<status>(?:(?:.|\s)*)<id>(?<code>\d+)<\/id><message>(?<message>.+?)<\/message>/';
+
+	/** @var string */
+	private $login;
+
+	/** string */
+	private $password;
+
+
+	/**
+	 * @param string $login
+	 * @param string $password
+	 */
+	public function __construct(string $login, string $password)
+	{
+		$this->login = $login;
+		$this->password = md5($password);
+	}
+
+
+	/**
+	 * Send SMS message to given phone number.
+	 * If phone number is not in valid format it will be formatted automatically.
+	 *
+	 * @param string $message
+	 * @param string $phoneNumber
+	 * @param int $defaultPrefix
+	 */
+	public function send(string $message, string $phoneNumber, int $defaultPrefix = 420): void
+	{
+		$context = stream_context_create([
+			'http' => [
+				'method' => 'POST',
+				'header' => 'Content-type: application/x-www-form-urlencoded',
+				'content' => http_build_query([
+					'login' => $this->login,
+					'act' => 'send',
+					'msisdn' => $this->formatPhone($phoneNumber, $defaultPrefix),
+					'msg' => $message = trim($message),
+					'auth' => md5($this->password . $this->login . 'send' . substr($message, 0, self::AUTH_MSG_LENGTH)),
+				]),
+			],
+		]);
+
+		$response = (string) file_get_contents(self::API_URL, false, $context);
+
+		if (preg_match(self::RESPONSE_PATTERN, $response, $parser) && (int) $parser['code'] > 299) {
+			throw new \RuntimeException('Error #' . $parser['code'] . ': ' . $parser['message'], (int) $parser['code']);
+		}
+	}
+
+
+	/**
+	 * Normalize phone to basic format if pattern match.
+	 *
+	 * @param string $phone user input
+	 * @param int $defaultPrefix use this prefix when number prefix does not exist
+	 * @return string
+	 */
+	private function formatPhone(string $phone, int $defaultPrefix): string
+	{
+		$phone = (string) preg_replace('/\s+/', '', $phone); // remove spaces
+
+		if (preg_match('/^([\+0-9]+)/', $phone, $trimUnexpected)) { // remove user notice and unexpected characters
+			$phone = (string) $trimUnexpected[1];
+		}
+
+		if (preg_match('/^\+(4\d{2})(\d{3})(\d{3})(\d{3})$/', $phone, $prefixParser)) { // +420 xxx xxx xxx
+			$phone = '+' . $prefixParser[1] . ' ' . $prefixParser[2] . ' ' . $prefixParser[3] . ' ' . $prefixParser[4];
+		} elseif (preg_match('/^\+(4\d{2})(\d+)$/', $phone, $prefixSimpleParser)) { // +420 xxx
+			$phone = '+' . $prefixSimpleParser[1] . ' ' . $prefixSimpleParser[2];
+		} elseif (preg_match('/^(\d{3})(\d{3})(\d{3})$/', $phone, $regularParser)) { // numbers only
+			$phone = '+' . $defaultPrefix . ' ' . $regularParser[1] . ' ' . $regularParser[2] . ' ' . $regularParser[3];
+		}
+
+		return $phone;
+	}
+}
