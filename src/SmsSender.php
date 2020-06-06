@@ -19,7 +19,7 @@ final class SmsSender
 	/** @var string */
 	private $login;
 
-	/** string */
+	/** @var string */
 	private $password;
 
 
