@@ -16,17 +16,11 @@ final class SmsSender
 
 	public const RESPONSE_PATTERN = '/<status>(?:(?:.|\s)*)<id>(?<code>\d+)<\/id><message>(?<message>.+?)<\/message>/';
 
-	/** @var string */
-	private $login;
+	private string $login;
 
-	/** @var string */
-	private $password;
+	private string $password;
 
 
-	/**
-	 * @param string $login
-	 * @param string $password
-	 */
 	public function __construct(string $login, string $password)
 	{
 		$this->login = $login;
@@ -37,10 +31,6 @@ final class SmsSender
 	/**
 	 * Send SMS message to given phone number.
 	 * If phone number is not in valid format it will be formatted automatically.
-	 *
-	 * @param string $message
-	 * @param string $phoneNumber
-	 * @param int $defaultPrefix
 	 */
 	public function send(string $message, string $phoneNumber, int $defaultPrefix = 420): void
 	{
@@ -71,7 +61,6 @@ final class SmsSender
 	 *
 	 * @param string $phone user input
 	 * @param int $defaultPrefix use this prefix when number prefix does not exist
-	 * @return string
 	 */
 	private function formatPhone(string $phone, int $defaultPrefix): string
 	{
