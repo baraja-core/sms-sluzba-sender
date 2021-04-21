@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Baraja\Sms;
 
 
+use Baraja\PhoneNumber\PhoneNumberFormatter;
+
 /**
  * Send SMS via https://sms-sluzba.cz
  */
@@ -45,7 +47,7 @@ final class SmsSender
 				'content' => http_build_query([
 					'login' => $this->login,
 					'act' => 'send',
-					'msisdn' => $this->formatPhone($phoneNumber, $defaultPrefix),
+					'msisdn' => PhoneNumberFormatter::fix($phoneNumber, $defaultPrefix),
 					'msg' => $message = trim($message),
 					'auth' => md5($this->password . $this->login . 'send' . substr($message, 0, self::AUTH_MSG_LENGTH)),
 				]),
@@ -62,32 +64,6 @@ final class SmsSender
 	public function setApiUrl(string $apiUrl): void
 	{
 		$this->apiUrl = $apiUrl;
-	}
-
-
-	/**
-	 * Normalize phone to basic format if pattern match.
-	 *
-	 * @param string $phone user input
-	 * @param int $defaultPrefix use this prefix when number prefix does not exist
-	 */
-	private function formatPhone(string $phone, int $defaultPrefix): string
-	{
-		$phone = (string) preg_replace('/\s+/', '', $phone); // remove spaces
-
-		if (preg_match('/^([\+0-9]+)/', $phone, $trimUnexpected)) { // remove user notice and unexpected characters
-			$phone = (string) $trimUnexpected[1];
-		}
-
-		if (preg_match('/^\+(4\d{2})(\d{3})(\d{3})(\d{3})$/', $phone, $prefixParser)) { // +420 xxx xxx xxx
-			$phone = '+' . $prefixParser[1] . ' ' . $prefixParser[2] . ' ' . $prefixParser[3] . ' ' . $prefixParser[4];
-		} elseif (preg_match('/^\+(4\d{2})(\d+)$/', $phone, $prefixSimpleParser)) { // +420 xxx
-			$phone = '+' . $prefixSimpleParser[1] . ' ' . $prefixSimpleParser[2];
-		} elseif (preg_match('/^(\d{3})(\d{3})(\d{3})$/', $phone, $regularParser)) { // numbers only
-			$phone = '+' . $defaultPrefix . ' ' . $regularParser[1] . ' ' . $regularParser[2] . ' ' . $regularParser[3];
-		}
-
-		return $phone;
 	}
 
 
