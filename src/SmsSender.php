@@ -23,6 +23,12 @@ final class SmsSender
 
 	public function __construct(string $login, string $password)
 	{
+		$login = trim($login);
+		$password = trim($password);
+		if ($login === '' || $password === '') {
+			throw new \InvalidArgumentException('Login or password can not be empty.');
+		}
+
 		$this->login = $login;
 		$this->password = md5($password);
 	}
