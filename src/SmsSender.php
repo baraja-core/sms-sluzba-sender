@@ -10,11 +10,11 @@ namespace Baraja\Sms;
  */
 final class SmsSender
 {
-	public const API_URL = 'https://smsgateapi.sluzba.cz/apipost30/sms';
-
 	public const AUTH_MSG_LENGTH = 31;
 
 	public const RESPONSE_PATTERN = '/<status>(?:(?:.|\s)*)<id>(?<code>\d+)<\/id><message>(?<message>.+?)<\/message>/';
+
+	private string $apiUrl = 'https://smsgateapi.sluzba.cz/apipost30/sms';
 
 	private string $login;
 
@@ -54,11 +54,17 @@ final class SmsSender
 			],
 		]);
 
-		$response = (string) file_get_contents(self::API_URL, false, $context);
+		$response = (string) file_get_contents($this->apiUrl, false, $context);
 
 		if (preg_match(self::RESPONSE_PATTERN, $response, $parser) && (int) $parser['code'] > 299) {
 			throw new \RuntimeException('Error #' . $parser['code'] . ': ' . $parser['message'], (int) $parser['code']);
 		}
+	}
+
+
+	public function setApiUrl(string $apiUrl): void
+	{
+		$this->apiUrl = $apiUrl;
 	}
 
 
