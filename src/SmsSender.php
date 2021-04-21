@@ -12,8 +12,6 @@ final class SmsSender
 {
 	public const AUTH_MSG_LENGTH = 31;
 
-	public const RESPONSE_PATTERN = '/<status>(?:(?:.|\s)*)<id>(?<code>\d+)<\/id><message>(?<message>.+?)<\/message>/';
-
 	private string $apiUrl = 'https://smsgateapi.sluzba.cz/apipost30/sms';
 
 	private string $login;
@@ -55,9 +53,8 @@ final class SmsSender
 		]);
 
 		$response = (string) file_get_contents($this->apiUrl, false, $context);
-
-		if (preg_match(self::RESPONSE_PATTERN, $response, $parser) && (int) $parser['code'] > 299) {
-			throw new \RuntimeException('Error #' . $parser['code'] . ': ' . $parser['message'], (int) $parser['code']);
+		if ($response) {
+			$this->processResponse($response);
 		}
 	}
 
@@ -91,5 +88,22 @@ final class SmsSender
 		}
 
 		return $phone;
+	}
+
+
+	private function processResponse(string $response): void
+	{
+		if (preg_match(
+				'/<status>(?:(?:.|\s)*)<id>(?<code>\d+)<\/id><message>(?<message>.+?)<\/message>/',
+				$response,
+				$parser
+			)
+			&& (int) $parser['code'] > 299
+		) {
+			throw new CanNotSendSmsException(
+				'Error #' . $parser['code'] . ': ' . $parser['message'],
+				(int) $parser['code'],
+			);
+		}
 	}
 }
