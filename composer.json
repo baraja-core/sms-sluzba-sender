@@ -13,6 +13,7 @@
 		"baraja-core/phone-number": "^1.0"
 	},
 	"require-dev": {
+		"nette/utils": "^3.0",
 		"phpstan/phpstan": "^0.12.74",
 		"tracy/tracy": "^2.8",
 		"phpstan/phpstan-nette": "^0.12.14",

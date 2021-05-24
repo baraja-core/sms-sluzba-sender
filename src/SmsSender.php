@@ -6,6 +6,7 @@ namespace Baraja\Sms;
 
 
 use Baraja\PhoneNumber\PhoneNumberFormatter;
+use Nette\Utils\Strings;
 
 /**
  * Send SMS via https://sms-sluzba.cz
@@ -40,6 +41,10 @@ final class SmsSender
 	 */
 	public function send(string $message, string $phoneNumber, int $defaultPrefix = 420): void
 	{
+	    if (class_exists(Strings::class)) {
+	        $message = Strings::toAscii($message);
+        }
+	    $message = trim($message);
 		$context = stream_context_create([
 			'http' => [
 				'method' => 'POST',
@@ -48,7 +53,7 @@ final class SmsSender
 					'login' => $this->login,
 					'act' => 'send',
 					'msisdn' => PhoneNumberFormatter::fix($phoneNumber, $defaultPrefix),
-					'msg' => $message = trim($message),
+					'msg' => $message,
 					'auth' => md5($this->password . $this->login . 'send' . substr($message, 0, self::AUTH_MSG_LENGTH)),
 				]),
 			],
