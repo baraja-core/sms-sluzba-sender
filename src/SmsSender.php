@@ -41,23 +41,32 @@ final class SmsSender
 	 */
 	public function send(string $message, string $phoneNumber, int $defaultPrefix = 420): void
 	{
-	    if (class_exists(Strings::class)) {
-	        $message = Strings::toAscii($message);
-        }
-	    $message = trim($message);
-		$context = stream_context_create([
-			'http' => [
-				'method' => 'POST',
-				'header' => 'Content-type: application/x-www-form-urlencoded',
-				'content' => http_build_query([
-					'login' => $this->login,
-					'act' => 'send',
-					'msisdn' => PhoneNumberFormatter::fix($phoneNumber, $defaultPrefix),
-					'msg' => $message,
-					'auth' => md5($this->password . $this->login . 'send' . substr($message, 0, self::AUTH_MSG_LENGTH)),
-				]),
-			],
-		]);
+		if (class_exists(Strings::class)) {
+			$message = Strings::toAscii($message);
+		}
+		$message = trim($message);
+		$context = stream_context_create(
+			[
+				'http' => [
+					'method' => 'POST',
+					'header' => 'Content-type: application/x-www-form-urlencoded',
+					'content' => http_build_query(
+						[
+							'login' => $this->login,
+							'act' => 'send',
+							'msisdn' => PhoneNumberFormatter::fix($phoneNumber, $defaultPrefix),
+							'msg' => $message,
+							'auth' => md5(
+								$this->password
+								. $this->login
+								. 'send'
+								. substr($message, 0, self::AUTH_MSG_LENGTH)
+							),
+						]
+					),
+				],
+			]
+		);
 
 		$response = (string) file_get_contents($this->apiUrl, false, $context);
 		if ($response) {
@@ -75,10 +84,10 @@ final class SmsSender
 	private function processResponse(string $response): void
 	{
 		if (preg_match(
-			'/<status>(?:(?:.|\s)*)<id>(?<code>\d+)<\/id><message>(?<message>.+?)<\/message>/',
-			$response,
-			$parser,
-		)
+				'/<status>(?:(?:.|\s)*)<id>(?<code>\d+)<\/id><message>(?<message>.+?)<\/message>/',
+				$response,
+				$parser,
+			)
 			&& (int) $parser['code'] > 299
 		) {
 			throw new CanNotSendSmsException(
