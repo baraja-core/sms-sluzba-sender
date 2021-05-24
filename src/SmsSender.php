@@ -84,10 +84,10 @@ final class SmsSender
 	private function processResponse(string $response): void
 	{
 		if (preg_match(
-				'/<status>(?:(?:.|\s)*)<id>(?<code>\d+)<\/id><message>(?<message>.+?)<\/message>/',
-				$response,
-				$parser,
-			)
+			'/<status>(?:.|\s)*<id>(?<code>\d+)<\/id><message>(?<message>.+?)<\/message>/',
+			$response,
+			$parser,
+		)
 			&& (int) $parser['code'] > 299
 		) {
 			throw new CanNotSendSmsException(
