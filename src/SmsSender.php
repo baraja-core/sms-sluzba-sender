@@ -60,12 +60,12 @@ final class SmsSender
 								$this->password
 								. $this->login
 								. 'send'
-								. substr($message, 0, self::AUTH_MSG_LENGTH)
+								. substr($message, 0, self::AUTH_MSG_LENGTH),
 							),
-						]
+						],
 					),
 				],
-			]
+			],
 		);
 
 		$response = (string) file_get_contents($this->apiUrl, false, $context);
