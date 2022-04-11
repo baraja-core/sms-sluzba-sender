@@ -69,7 +69,7 @@ final class SmsSender
 		);
 
 		$response = (string) file_get_contents($this->apiUrl, false, $context);
-		if ($response) {
+		if ($response !== '') {
 			$this->processResponse($response);
 		}
 	}
@@ -87,7 +87,7 @@ final class SmsSender
 			'/<status>(?:.|\s)*<id>(?<code>\d+)<\/id><message>(?<message>.+?)<\/message>/',
 			$response,
 			$parser,
-		)
+		) === 1
 			&& (int) $parser['code'] > 299
 		) {
 			throw new CanNotSendSmsException(
